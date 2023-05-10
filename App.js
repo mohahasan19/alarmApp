@@ -1,52 +1,43 @@
-import React, { useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  Button,
-  View,
-} from 'react-native';
-import DateTimePickerModal from "react-native-modal-datetime-picker";
+import React, { useState, useEffect } from 'react';
+import { Text, Button, View } from 'react-native';
+import { VolumeManager, useRingerMode, RINGER_MODE, checkDndAccess,
+  requestDndAccess,
+  RingerModeType, getRingerMode } from 'react-native-volume-manager';
 
-const App=() => {
+const App = () => {
+  const { mode, error, setMode } = useRingerMode();
+  const newMode = getRingerMode();
 
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  useEffect(() => {
+    (async() => {
+      if (mode === RINGER_MODE.silent || newMode === RINGER_MODE.silent ) {
+      const hasDndAccess = await checkDndAccess();
+      console.log("HOOOOOOO");
+      if (hasDndAccess === false) {
+        // This function opens the DND settings.
+        // You can ask user to give the permission with a modal before calling this function.
+        requestDndAccess();
+        return;
+      }
+    }
+    setMode(RINGER_MODE.normal);
 
-  const showDatePicker = () => {
-    setDatePickerVisibility(true);
-  };
-
-  const hideDatePicker = () => {
-    setDatePickerVisibility(false);
-    console.log("canceled");
-  };
-
-  const handleConfirm = (date) => {
-    console.log("A date has been picked: ", date);
-    hideDatePicker();
-  };
+    VolumeManager.setVolume(1, {
+      type: 'ring', // default: "music" (Android only)
+      showUI: true, // default: false (suppress native UI volume toast for iOS & Android)
+      playSound: true, // default: false (Android only)
+    }, () => console.log("i work"));
+    })();
+    
+  }, []);
 
   return (
-    <ScrollView
-    style={styles.bgColor}>
-      <View
-      style={styles.bgColor}>
-      <Button title="Start Time" onPress={showDatePicker} />
-      <DateTimePickerModal
-        isVisible={isDatePickerVisible}
-        mode="time"
-        onConfirm={handleConfirm}
-        onCancel={hideDatePicker}
-      />
+    <View>
+      <Text>hiiiiiiiii</Text>
+      <Button title="Normal" onPress={() => setMode(RINGER_MODE.normal)} />
     </View>
-    </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
-  bgColor: {
-    backgroundColor: 'black'
-  }
-});
-
 export default App;
+
